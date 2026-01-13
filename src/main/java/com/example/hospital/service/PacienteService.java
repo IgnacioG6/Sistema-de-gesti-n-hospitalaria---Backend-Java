@@ -9,19 +9,19 @@ import java.util.Optional;
 
 public interface PacienteService {
 
-    public List<Paciente> obtenerPacientes();
+    List<Paciente> obtenerPacientes();
 
-    public Optional BuscarPacientePorId(String dni);
+    Optional BuscarPacientePorId(String dni);
 
-    public Paciente crarPaciente(Paciente paciente);
+    Paciente crarPaciente(Paciente paciente);
 
-    public void eliminarPaciente(int id);
+    void eliminarPaciente(int id);
 
-    public Paciente actualizarPaciente(Paciente paciente);
+    Paciente actualizarPaciente(Paciente paciente);
 
-    public Paciente actualizarEstado(Estado estado);
+    Paciente actualizarEstado(Estado estado);
 
-    public HistoriaClinica mostrarHistorial(HistoriaClinica historiaClinica);
+    HistoriaClinica mostrarHistorial(HistoriaClinica historiaClinica);
 
 
 }
