@@ -9,7 +9,6 @@ import java.time.LocalDate;
 
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Setter
 @Getter
 public class Paciente {
@@ -23,7 +22,7 @@ public class Paciente {
     private String telefono;
     private String direccion;
     private TipoSangre tipoSangre;
-    private String string;
+    private String alergias;
     private Estado estado;
 
 }
