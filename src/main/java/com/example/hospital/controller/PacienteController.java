@@ -2,7 +2,7 @@ package com.example.hospital.controller;
 
 import com.example.hospital.dto.request.PacienteRequestDTO;
 import com.example.hospital.dto.response.PacienteResponseDTO;
-import com.example.hospital.model.Paciente;
+import com.example.hospital.model.enums.Estado;
 import com.example.hospital.service.PacienteService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -27,17 +27,41 @@ public class PacienteController {
     }
 
     @GetMapping
-    public ResponseEntity<List<PacienteResponseDTO>> listarPacientes(){
-        List<PacienteResponseDTO> pacientes = pacienteService.obtenerTodos();
-
-        return ResponseEntity.ok(pacientes);
+    public ResponseEntity<List<PacienteResponseDTO>> listarPacientes() {
+        return ResponseEntity.ok(pacienteService.obtenerTodos());
     }
 
-    @GetMapping("/id/{id}")
-    public ResponseEntity<PacienteRequestDTO> buscarPacientePorId(@PathVariable Long id){
-        PacienteResponseDTO paciente = pacienteService.buscarPorId(id);
-        return ResponseEntity.ok(paciente);
+    @GetMapping("/{id}")
+    public ResponseEntity<PacienteResponseDTO> buscarPacientePorId(@PathVariable Long id) {
+        return ResponseEntity.ok(pacienteService.buscarPorId(id));
     }
 
+    @GetMapping("/dni/{dni}")
+    public ResponseEntity<PacienteResponseDTO> buscarPacientePorDni(@PathVariable String dni) {
+        return ResponseEntity.ok(pacienteService.buscarPorDni(dni));
+    }
 
+    @PutMapping("/{id}")
+    public ResponseEntity<PacienteResponseDTO> actualizarPaciente(
+            @PathVariable Long id,
+            @RequestBody PacienteRequestDTO paciente
+    ) {
+        return ResponseEntity.ok(pacienteService.actualizarPaciente(id, paciente));
+    }
+
+    @PutMapping("/{id}/activar")
+    public ResponseEntity<PacienteResponseDTO> activar(@PathVariable Long id) {
+        return ResponseEntity.ok(pacienteService.cambiarEstado(id, Estado.ACTIVO));
+    }
+
+    @PutMapping("/{id}/desactivar")
+    public ResponseEntity<PacienteResponseDTO> desactivar(@PathVariable Long id) {
+        return ResponseEntity.ok(pacienteService.cambiarEstado(id, Estado.INACTIVO));
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> eliminarPaciente(@PathVariable Long id) {  // ✅ Void
+        pacienteService.eliminarPaciente(id);
+        return ResponseEntity.noContent().build();
+    }
 }
