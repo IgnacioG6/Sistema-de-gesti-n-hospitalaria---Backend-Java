@@ -8,12 +8,15 @@ import lombok.*;
 import java.time.LocalDate;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Setter
 @Getter
 public class Paciente {
 
+    private static long contador = 1;
+
+    @Setter(AccessLevel.NONE)
     private Long id;
+
     private String nombre;
     private String dni;
     private LocalDate fechaNacimiento;
@@ -24,5 +27,9 @@ public class Paciente {
     private TipoSangre tipoSangre;
     private String alergias;
     private Estado estado;
+
+    public Paciente() {
+        this.id = contador++;
+    }
 
 }
