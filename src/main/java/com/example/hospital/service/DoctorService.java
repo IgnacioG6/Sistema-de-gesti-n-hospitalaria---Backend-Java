@@ -21,7 +21,7 @@ public class DoctorService {
                 .toList();
     }
 
-    public Doctor buscarEntidadPorId(Long id) {
+    private Doctor buscarEntidadPorId(Long id) {
         return doctores.stream()
                 .filter(d -> d.getId().equals(id))
                 .findFirst()
