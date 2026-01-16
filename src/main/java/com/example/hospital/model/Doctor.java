@@ -5,11 +5,14 @@ import com.example.hospital.model.enums.HorarioAtencion;
 import lombok.*;
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Setter
 @Getter
 public class Doctor {
+    private static long contador = 1;
+
+    @Setter(AccessLevel.NONE)
     private Long id;
+
     private String nombre;
     private String licenciaMedica;
     private Especialidad especialidad;
@@ -18,4 +21,8 @@ public class Doctor {
     private int añosExperiencia;
     private HorarioAtencion horarioAtencion;
     private boolean disponible;
+
+    public Doctor() {
+        this.id = contador++;
+    }
 }
