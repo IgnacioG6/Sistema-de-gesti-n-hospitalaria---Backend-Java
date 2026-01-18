@@ -23,7 +23,7 @@ public class PacienteService {
                 .toList();
     }
 
-    private Paciente buscarEntidadPorId(Long id) {
+    public Paciente buscarEntidadPorId(Long id) {
         return pacientes.stream()
                 .filter(p -> p.getId().equals(id))
                 .findFirst()

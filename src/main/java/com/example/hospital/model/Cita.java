@@ -7,11 +7,15 @@ import java.time.LocalDateTime;
 
 
 @AllArgsConstructor
-@NoArgsConstructor
 @Setter
 @Getter
 public class Cita {
+    private static long contador = 1;
+
+
+    @Setter(AccessLevel.NONE)
     private Long id;
+
     private Paciente paciente;
     private Doctor doctor;
     private LocalDateTime fechaHora;
@@ -19,4 +23,10 @@ public class Cita {
     private EstadoCita estadoCita;
     private int duracion;
     private String notas;
+
+    public Cita() {
+        this.id = contador++;
+    }
+
+
 }
