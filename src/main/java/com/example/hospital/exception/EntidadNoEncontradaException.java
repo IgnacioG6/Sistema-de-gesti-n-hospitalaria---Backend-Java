@@ -1,7 +1,7 @@
 package com.example.hospital.exception;
 
-public class EntityNotFoundException extends RuntimeException {
-    public EntityNotFoundException(String message) {
+public class EntidadNoEncontradaException extends RuntimeException {
+    public EntidadNoEncontradaException(String message) {
         super(message);
     }
 }

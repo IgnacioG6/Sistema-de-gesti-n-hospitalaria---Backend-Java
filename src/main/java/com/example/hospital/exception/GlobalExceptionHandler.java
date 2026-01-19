@@ -11,12 +11,24 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(EntityNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEntityNotFound(EntityNotFoundException ex, WebRequest request) {
+    @ExceptionHandler(EntidadNoEncontradaException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(EntidadNoEncontradaException ex, WebRequest request) {
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "Recurso no encontrado",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(EstadoInvalidoException.class)
+    public ResponseEntity<ErrorResponse> handleEntityNotFound(EstadoInvalidoException ex, WebRequest request) {
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.CONFLICT.value(),
+                "Estado invalido",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
         );

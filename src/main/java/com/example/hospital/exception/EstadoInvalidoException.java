@@ -1,7 +1,7 @@
 package com.example.hospital.exception;
 
-public class InvalidStateException extends RuntimeException {
-    public InvalidStateException(String message) {
+public class EstadoInvalidoException extends RuntimeException {
+    public EstadoInvalidoException(String message) {
         super(message);
     }
 }

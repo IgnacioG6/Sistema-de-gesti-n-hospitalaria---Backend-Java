@@ -2,9 +2,9 @@ package com.example.hospital.service;
 
 import com.example.hospital.dto.request.CitaRequestDTO;
 import com.example.hospital.dto.response.CitaResponseDTO;
-import com.example.hospital.exception.EntityNotFoundException;
-import com.example.hospital.exception.InvalidStateException;
-import com.example.hospital.exception.ValidationException;
+import com.example.hospital.exception.EntidadNoEncontradaException;
+import com.example.hospital.exception.EstadoInvalidoException;
+import com.example.hospital.exception.ValidacionException;
 import com.example.hospital.mapper.CitaMapper;
 import com.example.hospital.model.Cita;
 import com.example.hospital.model.Doctor;
@@ -64,19 +64,19 @@ public class CitaService {
         switch (cita.getEstadoCita()) {
             case PROGRAMADO:
                 if (estado != EstadoCita.EN_PROCESO && estado != EstadoCita.CANCELADO) {
-                    throw new InvalidStateException("Desde PROGRAMADO solo se puede pasar a EN_PROCESO o CANCELADO");
+                    throw new EstadoInvalidoException("Desde PROGRAMADO solo se puede pasar a EN_PROCESO o CANCELADO");
                 }
                 break;
 
             case EN_PROCESO:
                 if (estado != EstadoCita.COMPLETADO && estado != EstadoCita.CANCELADO) {
-                    throw new InvalidStateException("Desde EN_PROCESO solo se puede pasar a COMPLETADO o CANCELADO");
+                    throw new EstadoInvalidoException("Desde EN_PROCESO solo se puede pasar a COMPLETADO o CANCELADO");
                 }
                 break;
 
             case COMPLETADO:
             case CANCELADO:
-                throw new InvalidStateException("No se puede cambiar el estado de una cita " + cita.getEstadoCita());
+                throw new EstadoInvalidoException("No se puede cambiar el estado de una cita " + cita.getEstadoCita());
         }
 
         cita.setEstadoCita(estado);
@@ -90,7 +90,7 @@ public class CitaService {
         Cita cita = buscarEntidadPorId(id);
 
         if (cita.getEstadoCita() != EstadoCita.PROGRAMADO) {
-            throw new InvalidStateException("Solo se pueden cancelar citas en estado PROGRAMADO");
+            throw new EstadoInvalidoException("Solo se pueden cancelar citas en estado PROGRAMADO");
         }
 
         citas.remove(cita);
@@ -107,19 +107,19 @@ public class CitaService {
 
 
         if (paciente.getEstado() != Estado.ACTIVO) {
-            throw new ValidationException("El paciente debe estar activo");
+            throw new ValidacionException("El paciente debe estar activo");
         }
 
         if (!doctor.isDisponible()) {
-            throw new ValidationException("El doctor no está disponible");
+            throw new ValidacionException("El doctor no está disponible");
         }
 
         if (request.fechaHora().isBefore(LocalDateTime.now())) {
-            throw new ValidationException("La fecha debe ser futura");
+            throw new ValidacionException("La fecha debe ser futura");
         }
 
         if (request.fechaHora().getDayOfWeek() == DayOfWeek.SUNDAY) {
-            throw new ValidationException("No se pueden agendar citas los domingos");
+            throw new ValidacionException("No se pueden agendar citas los domingos");
         }
 
         Cita cita = new Cita();
@@ -144,7 +144,7 @@ public class CitaService {
                 .count();
 
         if (citasProgramadas >= 3) {
-            throw new ValidationException("El paciente ya tiene 3 citas programadas");
+            throw new ValidacionException("El paciente ya tiene 3 citas programadas");
         }
     }
 
@@ -154,7 +154,7 @@ public class CitaService {
         return citas.stream()
                 .filter(cita -> cita.getId().equals(id))
                 .findFirst()
-                .orElseThrow(() -> new EntityNotFoundException("Cita no encontrada con ID: " + id));
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + id));
     }
 
     public CitaResponseDTO buscarPorId(Long id) {
@@ -167,17 +167,17 @@ public class CitaService {
         Cita cita = buscarEntidadPorId(id);
 
         if (cita.getEstadoCita() != EstadoCita.PROGRAMADO) {
-            throw new InvalidStateException("Solo se pueden actualizar citas en estado PROGRAMADO");
+            throw new EstadoInvalidoException("Solo se pueden actualizar citas en estado PROGRAMADO");
         }
 
         if (!cita.getFechaHora().equals(request.fechaHora())) {
 
             if (request.fechaHora().isBefore(LocalDateTime.now())) {
-                throw new ValidationException("La fecha debe ser futura");
+                throw new ValidacionException("La fecha debe ser futura");
             }
 
             if (request.fechaHora().getDayOfWeek() == DayOfWeek.SUNDAY) {
-                throw new ValidationException("No se pueden agendar citas los domingos");
+                throw new ValidacionException("No se pueden agendar citas los domingos");
             }
 
             validarDisponibilidadDoctor(
@@ -212,7 +212,7 @@ public class CitaService {
         LocalDateTime finNuevaCita = fechaHora.plusMinutes(duracion);
 
         for (Cita cita : citasDoctor) {
-            if (citaIdActual != null && cita.getId().equals(citaIdActual)) {
+            if (cita.getId().equals(citaIdActual)) {
                 continue;
             }
 
@@ -224,7 +224,7 @@ public class CitaService {
                             (finNuevaCita.isAfter(inicioCitaExistente));
 
             if (haySuperposicion) {
-                throw new ValidationException("El doctor ya tiene una cita en ese horario");
+                throw new ValidacionException("El doctor ya tiene una cita en ese horario");
             }
         }
     }

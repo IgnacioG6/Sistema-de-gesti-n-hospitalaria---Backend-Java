@@ -1,7 +1,7 @@
 package com.example.hospital.exception;
 
-public class ValidationException extends RuntimeException {
-    public ValidationException(String message) {
+public class ValidacionException extends RuntimeException {
+    public ValidacionException(String message) {
         super(message);
     }
 }

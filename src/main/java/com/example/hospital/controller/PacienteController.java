@@ -60,7 +60,7 @@ public class PacienteController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarPaciente(@PathVariable Long id) {  // ✅ Void
+    public ResponseEntity<Void> eliminarPaciente(@PathVariable Long id) {
         pacienteService.eliminarPaciente(id);
         return ResponseEntity.noContent().build();
     }

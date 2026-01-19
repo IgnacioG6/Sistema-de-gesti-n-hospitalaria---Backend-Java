@@ -2,7 +2,7 @@ package com.example.hospital.service;
 
 import com.example.hospital.dto.request.DoctorRequestDTO;
 import com.example.hospital.dto.response.DoctorResponseDTO;
-import com.example.hospital.exception.EntityNotFoundException;
+import com.example.hospital.exception.EntidadNoEncontradaException;
 import com.example.hospital.mapper.DoctorMapper;
 import com.example.hospital.model.Doctor;
 import com.example.hospital.model.enums.Especialidad;
@@ -26,7 +26,7 @@ public class DoctorService {
                 .filter(d -> d.getId().equals(id))
                 .findFirst()
                 .orElseThrow(() ->
-                        new EntityNotFoundException("Doctor no encontrado con id: " + id)
+                        new EntidadNoEncontradaException("Doctor no encontrado con id: " + id)
                 );
     }
 
@@ -45,7 +45,7 @@ public class DoctorService {
                 .filter(doctor -> licencia.equals(doctor.getLicenciaMedica()))
                 .findFirst()
                 .map(DoctorMapper::toResponseDTO)
-                .orElseThrow(() -> new EntityNotFoundException(
+                .orElseThrow(() -> new EntidadNoEncontradaException(
                         "Doctor no encontrado con licencia: " + licencia
                 ));
     }
