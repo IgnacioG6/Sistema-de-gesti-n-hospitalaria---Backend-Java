@@ -55,6 +55,7 @@ public class PacienteService {
         paciente.setDireccion(request.direccion());
         paciente.setTipoSangre(request.tipoSangre());
         paciente.setAlergias(request.alergias());
+        paciente.setEstado(Estado.ACTIVO);
 
         pacientes.add(paciente);
         return PacienteMapper.toResponseDTO(paciente);

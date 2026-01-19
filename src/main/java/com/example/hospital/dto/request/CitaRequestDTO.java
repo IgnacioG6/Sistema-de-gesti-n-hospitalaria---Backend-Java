@@ -1,5 +1,4 @@
 package com.example.hospital.dto.request;
-import com.example.hospital.model.enums.EstadoCita;
 
 import java.time.LocalDateTime;
 
