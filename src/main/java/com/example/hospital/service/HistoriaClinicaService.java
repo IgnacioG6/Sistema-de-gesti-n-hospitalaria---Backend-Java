@@ -59,11 +59,19 @@ public class HistoriaClinicaService {
         return historias.stream().map(HistoriaClinicaMapper::toResponseDTO).toList();
     }
 
-    public HistoriaClinicaResponseDTO buscarEntidadPorId(Long id) {
+    public HistoriaClinicaResponseDTO buscarPorId(Long id) {
         return historias.stream()
                 .filter(historiaClinica -> historiaClinica.getId().equals(id))
                 .findFirst()
                 .map(HistoriaClinicaMapper::toResponseDTO)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Historia clinica no encontrada con ID: " + id));
+    }
+
+
+    public HistoriaClinica buscarEntidadPorId(Long id) {
+        return historias.stream()
+                .filter(historiaClinica -> historiaClinica.getId().equals(id))
+                .findFirst()
                 .orElseThrow(() -> new EntidadNoEncontradaException("Historia clinica no encontrada con ID: " + id));
     }
 
