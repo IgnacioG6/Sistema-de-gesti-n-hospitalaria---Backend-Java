@@ -1,6 +1,6 @@
 package com.example.hospital.model;
 
-import com.example.hospital.dto.PrescripcionItemDTO;
+import com.example.hospital.dto.RecetaItemDTO;
 import lombok.*;
 
 import java.time.LocalDate;
@@ -14,7 +14,7 @@ public class Receta {
     private Long id;
 
     private HistoriaClinica historiaClinica;
-    private List<PrescripcionItemDTO> medicamentos = new ArrayList<>();
+    private List<RecetaItemDTO> medicamentos = new ArrayList<>();
     private String instruccionesGenerales;
     private LocalDate fechaEmision;
     private LocalDate validaHasta;
