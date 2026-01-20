@@ -1,4 +1,38 @@
 package com.example.hospital.controller;
 
+import com.example.hospital.dto.request.RecetaRequestDTO;
+import com.example.hospital.dto.response.RecetaResponseDTO;
+import com.example.hospital.model.Receta;
+import com.example.hospital.service.RecetaService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+@RestController
+@RequestMapping("/api/recetas")
 public class RecetaController {
+
+    private final RecetaService recetaService;
+
+    public RecetaController(RecetaService recetaService) {
+        this.recetaService = recetaService;
+    }
+
+    @PostMapping
+    public ResponseEntity<RecetaResponseDTO> crearReceta(@RequestBody RecetaRequestDTO recetaRequest) {
+        RecetaResponseDTO receta = recetaService.crearReceta(recetaRequest);
+        return  ResponseEntity.status(HttpStatus.CREATED).body(receta);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<RecetaResponseDTO> buscarRecetaPorId(Long id) {
+        RecetaResponseDTO receta = recetaService.buscarRecetaPorId(id);
+        return  ResponseEntity.status(HttpStatus.OK).body(receta);
+    }
+
+
+
+
+
+
 }
