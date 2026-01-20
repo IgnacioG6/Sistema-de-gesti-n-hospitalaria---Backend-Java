@@ -1,4 +1,13 @@
 package com.example.hospital.dto.request;
 
-public record RecetaRequestDTO() {
-}
+import com.example.hospital.dto.PrescripcionItemDTO;
+
+import java.time.LocalDate;
+import java.util.List;
+
+public record RecetaRequestDTO(
+        Long historiaClinicaId,
+        List<PrescripcionItemDTO> medicamentos,
+        String instruccionesGenerales,
+        LocalDate validaHasta
+) {}
