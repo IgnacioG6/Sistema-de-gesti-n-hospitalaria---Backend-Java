@@ -33,12 +33,12 @@ public class CitaController {
     }
 
 
-    @GetMapping("/paciente/{id}")
+    @GetMapping("/pacientes/{id}")
     public ResponseEntity<List<CitaResponseDTO>> BuscarCitasPorPaciente(@PathVariable Long id){
         return ResponseEntity.ok(citaService.buscarPorPaciente(id));
     }
 
-    @GetMapping("/doctor/{id}")
+    @GetMapping("/doctores/{id}")
     public ResponseEntity<List<CitaResponseDTO>> BuscarCitasPorDoctor(@PathVariable Long id){
         return ResponseEntity.ok(citaService.buscarPorDoctor(id));
     }
