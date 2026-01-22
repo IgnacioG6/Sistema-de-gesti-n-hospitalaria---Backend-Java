@@ -1,4 +1,10 @@
 package com.example.hospital.dto;
 
-public record ItemsFacturaDTO() {
-}
+import java.math.BigDecimal;
+
+public record ItemsFacturaDTO(
+        String descripcion,
+        int cantidad,
+        BigDecimal precioUnitario,
+        BigDecimal total
+) {}

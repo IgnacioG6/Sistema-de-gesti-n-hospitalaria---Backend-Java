@@ -1,4 +1,12 @@
 package com.example.hospital.dto.request;
 
-public record FacturaRequestDTO() {
-}
+import com.example.hospital.dto.ItemsFacturaDTO;
+
+import java.math.BigDecimal;
+import java.util.List;
+
+public record FacturaRequestDTO(
+        Long citaId,
+        List<ItemsFacturaDTO> items,
+        BigDecimal descuento  // Opcional, puede ser 0
+) {}
