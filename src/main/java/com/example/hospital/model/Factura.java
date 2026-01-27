@@ -4,7 +4,6 @@ import com.example.hospital.dto.ItemsFacturaDTO;
 import com.example.hospital.model.enums.EstadoFactura;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.math.BigDecimal;

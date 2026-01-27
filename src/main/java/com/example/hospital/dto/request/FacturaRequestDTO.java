@@ -8,5 +8,5 @@ import java.util.List;
 public record FacturaRequestDTO(
         Long citaId,
         List<ItemsFacturaDTO> items,
-        BigDecimal descuento  // Opcional, puede ser 0
+        BigDecimal descuento
 ) {}
