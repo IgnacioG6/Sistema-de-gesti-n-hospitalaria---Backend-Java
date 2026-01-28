@@ -1,4 +1,7 @@
 package com.example.hospital.dto.request;
 
-public record CambiarEstadoFacturaRequest() {
-}
+import com.example.hospital.model.enums.EstadoFactura;
+
+public record CambiarEstadoFacturaRequest(
+        EstadoFactura estado
+) {}
