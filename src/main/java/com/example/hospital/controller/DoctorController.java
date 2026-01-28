@@ -43,7 +43,7 @@ public class DoctorController {
     }
 
 
-    @PutMapping("/{id}")  // ✅
+    @PutMapping("/{id}")
     public ResponseEntity<DoctorResponseDTO> actualizarDoctor(@PathVariable Long id, @RequestBody DoctorRequestDTO doctorRequestDTO){
         DoctorResponseDTO doctor =  doctorService.actualizarDoctor(id, doctorRequestDTO);
         return ResponseEntity.ok(doctor);
