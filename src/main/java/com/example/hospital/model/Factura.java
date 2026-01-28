@@ -1,50 +1,53 @@
 package com.example.hospital.model;
 
-import com.example.hospital.dto.ItemsFacturaDTO;
 import com.example.hospital.model.enums.EstadoFactura;
-import lombok.AccessLevel;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Getter
 @Setter
+@NoArgsConstructor
+@Entity
+@Table(name = "facturas")
 public class Factura {
 
-    private static long contador = 1;
-
-    @Setter(AccessLevel.NONE)
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-
     private String nroFactura;
+    @ManyToOne
+    @JoinColumn(name = "paciente_id")
     private Paciente paciente;
+
+    @ManyToOne
+    @JoinColumn(name = "cita_id")
     private Cita cita;
-    private List<ItemsFacturaDTO> itemsFactura;
-    private BigDecimal subtotal;
+
+    @OneToMany(mappedBy = "factura", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<ItemsFactura> itemsFactura = new ArrayList<>();
+
     private BigDecimal descuento;
-    private BigDecimal total;
+
+    @Enumerated(EnumType.STRING)
     private EstadoFactura estadoFactura;
+
     private LocalDate fechaEmision;
     private LocalDate fechaVencimiento;
 
-    public Factura() {
-        this.estadoFactura = EstadoFactura.PENDIENTE;
-        this.nroFactura = String.format("FAC-%05d", contador);
-        this.id = contador++;
-        this.fechaEmision = LocalDate.now();
-        this.fechaVencimiento = LocalDate.now().plusDays(30);
-    }
-
+    @Transient
     public BigDecimal getSubtotal() {
         return itemsFactura.stream()
-                .map(ItemsFacturaDTO::total)
+                .map(ItemsFactura::getTotal)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
     }
 
+    @Transient
     public BigDecimal getTotal() {
         BigDecimal subtotal = getSubtotal();
         BigDecimal descuentoActual = descuento != null ? descuento : BigDecimal.ZERO;
