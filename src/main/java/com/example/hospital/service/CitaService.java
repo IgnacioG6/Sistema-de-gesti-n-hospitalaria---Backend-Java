@@ -11,11 +11,11 @@ import com.example.hospital.model.Doctor;
 import com.example.hospital.model.Paciente;
 import com.example.hospital.model.enums.Estado;
 import com.example.hospital.model.enums.EstadoCita;
+import com.example.hospital.repository.CitaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -23,39 +23,40 @@ public class CitaService {
 
     private final PacienteService pacienteService;
     private final DoctorService doctorService;
-    private List<Cita> citas = new ArrayList<>();
+    private final CitaRepository  citaRepository;
 
-    public CitaService(PacienteService pacienteService, DoctorService doctorService) {
+    public CitaService(PacienteService pacienteService, DoctorService doctorService, CitaRepository citaRepository) {
         this.pacienteService = pacienteService;
         this.doctorService = doctorService;
+        this.citaRepository = citaRepository;
     }
 
+
     public List<CitaResponseDTO> obtenerTodos() {
-        return citas.stream()
+        return citaRepository.findAll().stream()
                 .map(CitaMapper::toResponseDTO)
                 .toList();
     }
 
 
     public List<CitaResponseDTO> buscarPorPaciente(long idPaciente) {
-        return citas.stream()
-                .filter(cita -> cita.getPaciente().getId().equals(idPaciente))
+        return citaRepository.findByPacienteId(idPaciente).stream()
                 .map(CitaMapper::toResponseDTO)
                 .toList();
     }
 
     public List<CitaResponseDTO> buscarPorDoctor(long idDoctor) {
-        return citas.stream()
-                .filter(cita -> cita.getDoctor().getId().equals(idDoctor))
+        return citaRepository.findByDoctorId(idDoctor).stream()
                 .map(CitaMapper::toResponseDTO)
                 .toList();
+
     }
 
     public List<CitaResponseDTO> buscarPorEstado(EstadoCita estado) {
-        return citas.stream()
-                .filter(cita -> cita.getEstadoCita().equals(estado))
+        return citaRepository.findByEstadoCita(estado).stream()
                 .map(CitaMapper::toResponseDTO)
                 .toList();
+
     }
 
     public CitaResponseDTO cambiarEstado(EstadoCita estado, Long id) {
@@ -80,7 +81,7 @@ public class CitaService {
         }
 
         cita.setEstadoCita(estado);
-
+        citaRepository.save(cita);
         return CitaMapper.toResponseDTO(cita);
 
     }
@@ -93,7 +94,7 @@ public class CitaService {
             throw new EstadoInvalidoException("Solo se pueden cancelar citas en estado PROGRAMADO");
         }
 
-        citas.remove(cita);
+        citaRepository.delete(cita);
     }
 
 
@@ -131,15 +132,14 @@ public class CitaService {
         cita.setNotas(request.notas());
         cita.setDuracion(request.duracion());
 
-        citas.add(cita);
+        citaRepository.save(cita);
 
         return CitaMapper.toResponseDTO(cita);
     }
 
 
     private void validarLimiteCitasPaciente(Long pacienteId) {
-        long citasProgramadas = citas.stream()
-                .filter(c -> c.getPaciente().getId().equals(pacienteId))
+        long citasProgramadas = citaRepository.findByPacienteId(pacienteId).stream()
                 .filter(c -> c.getEstadoCita() == EstadoCita.PROGRAMADO)
                 .count();
 
@@ -151,10 +151,8 @@ public class CitaService {
 
 
     public Cita buscarEntidadPorId(Long id) {
-        return citas.stream()
-                .filter(cita -> cita.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + id));
+        return citaRepository.findById(id)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrado con id: " + id));
     }
 
     public CitaResponseDTO buscarPorId(Long id) {
@@ -193,16 +191,16 @@ public class CitaService {
         cita.setNotas(request.notas());
         cita.setDuracion(request.duracion());
 
+        citaRepository.save(cita);
         return CitaMapper.toResponseDTO(cita);
     }
 
 
     private List<Cita> obtenerCitasActivasDeDoctor(Long doctorId) {
-        return citas.stream()
-                .filter(cita -> cita.getDoctor().getId().equals(doctorId))
-                .filter(cita -> cita.getEstadoCita() == EstadoCita.PROGRAMADO ||
+        return citaRepository.findByDoctorId(doctorId).stream()
+                        .filter(cita -> cita.getEstadoCita() == EstadoCita.PROGRAMADO ||
                         cita.getEstadoCita() == EstadoCita.EN_PROCESO)
-                .toList();
+                        .toList();
     }
 
     private void validarDisponibilidadDoctor(Long doctorId, LocalDateTime fechaHora, int duracion, Long citaIdActual) {

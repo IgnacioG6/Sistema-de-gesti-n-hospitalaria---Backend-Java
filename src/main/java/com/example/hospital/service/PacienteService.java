@@ -6,27 +6,30 @@ import com.example.hospital.exception.EntidadNoEncontradaException;
 import com.example.hospital.mapper.PacienteMapper;
 import com.example.hospital.model.Paciente;
 import com.example.hospital.model.enums.Estado;
+import com.example.hospital.repository.PacienteRepository;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 
 @Service
 public class PacienteService {
 
-    private final List<Paciente> pacientes = new ArrayList<>();
+    private final PacienteRepository pacienteRepository;
+
+    public PacienteService(PacienteRepository pacienteRepository) {
+        this.pacienteRepository = pacienteRepository;
+    }
 
     public List<PacienteResponseDTO> obtenerTodos() {
-        return pacientes.stream()
+        return pacienteRepository.findAll().stream()
                 .map(PacienteMapper::toResponseDTO)
                 .toList();
     }
 
     public Paciente buscarEntidadPorId(Long id) {
-        return pacientes.stream()
-                .filter(p -> p.getId().equals(id))
-                .findFirst()
+        return pacienteRepository.findById(id)
                 .orElseThrow(() -> new EntidadNoEncontradaException("Paciente no encontrado con ID: " + id));
     }
 
@@ -37,11 +40,9 @@ public class PacienteService {
     }
 
     public PacienteResponseDTO buscarPorDni(String dni) {
-        return pacientes.stream()
-                .filter(p -> p.getDni().equals(dni))
-                .findFirst()
-                .map(PacienteMapper::toResponseDTO)
-                .orElseThrow(() -> new EntidadNoEncontradaException("Paciente no encontrado con dni: " + dni));
+        Paciente paciente = pacienteRepository.findByDni(dni)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Paciente no encontrado con DNI: " + dni));
+        return PacienteMapper.toResponseDTO(paciente);
     }
 
     public PacienteResponseDTO crearPaciente(PacienteRequestDTO request) {
@@ -57,7 +58,7 @@ public class PacienteService {
         paciente.setAlergias(request.alergias());
         paciente.setEstado(Estado.ACTIVO);
 
-        pacientes.add(paciente);
+        pacienteRepository.save(paciente);
         return PacienteMapper.toResponseDTO(paciente);
     }
 
@@ -73,17 +74,20 @@ public class PacienteService {
         paciente.setTipoSangre(request.tipoSangre());
         paciente.setAlergias(request.alergias());
 
+        pacienteRepository.save(paciente);
         return PacienteMapper.toResponseDTO(paciente);
     }
 
     public void eliminarPaciente(Long id) {
         Paciente paciente = buscarEntidadPorId(id);
-        pacientes.remove(paciente);
+        pacienteRepository.delete(paciente);
     }
 
     public PacienteResponseDTO cambiarEstado(Long id, Estado nuevoEstado) {
         Paciente paciente = buscarEntidadPorId(id);
         paciente.setEstado(nuevoEstado);
+        pacienteRepository.save(paciente);
+
         return PacienteMapper.toResponseDTO(paciente);
     }
 }

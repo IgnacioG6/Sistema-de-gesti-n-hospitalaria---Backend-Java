@@ -6,6 +6,7 @@ import com.example.hospital.exception.EntidadNoEncontradaException;
 import com.example.hospital.mapper.DoctorMapper;
 import com.example.hospital.model.Doctor;
 import com.example.hospital.model.enums.Especialidad;
+import com.example.hospital.repository.DoctorRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -13,23 +14,20 @@ import java.util.List;
 
 @Service
 public class DoctorService {
-    private final List<Doctor> doctores = new ArrayList<>();
+    private final DoctorRepository doctorRepository;
+
+    public DoctorService(DoctorRepository doctorRepository) {
+        this.doctorRepository = doctorRepository;
+    }
 
     public List<DoctorResponseDTO> obtenerTodos() {
-        return doctores.stream()
-                .map(DoctorMapper::toResponseDTO)
-                .toList();
+        return doctorRepository.findAll().stream().map(DoctorMapper::toResponseDTO).toList();
     }
 
     public Doctor buscarEntidadPorId(Long id) {
-        return doctores.stream()
-                .filter(d -> d.getId().equals(id))
-                .findFirst()
-                .orElseThrow(() ->
-                        new EntidadNoEncontradaException("Doctor no encontrado con id: " + id)
-                );
+        return doctorRepository.findById(id)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Doctor no encontrado con id: " + id));
     }
-
 
     public DoctorResponseDTO buscarDoctorPorId(Long id) {
         Doctor doctor = buscarEntidadPorId(id);
@@ -41,13 +39,9 @@ public class DoctorService {
             throw new IllegalArgumentException("La licencia médica es obligatoria");
         }
 
-        return doctores.stream()
-                .filter(doctor -> licencia.equals(doctor.getLicenciaMedica()))
-                .findFirst()
+        return doctorRepository.findByLicenciaMedica(licencia)
                 .map(DoctorMapper::toResponseDTO)
-                .orElseThrow(() -> new EntidadNoEncontradaException(
-                        "Doctor no encontrado con licencia: " + licencia
-                ));
+                .orElseThrow(() -> new EntidadNoEncontradaException("Doctor no encontrado con Licencia: " + licencia));
     }
 
     public DoctorResponseDTO registarDoctor(DoctorRequestDTO doctorRequestDTO) {
@@ -61,7 +55,7 @@ public class DoctorService {
         doctor.setHorarioAtencion(doctorRequestDTO.horarioAtencion());
         doctor.setDisponible(true);
 
-        doctores.add(doctor);
+        doctorRepository.save(doctor);
         return DoctorMapper.toResponseDTO(doctor);
     }
 
@@ -77,25 +71,24 @@ public class DoctorService {
         doctor.setAñosExperiencia(dto.añosExperiencia());
         doctor.setHorarioAtencion(dto.horarioAtencion());
 
+        doctorRepository.save(doctor);
         return DoctorMapper.toResponseDTO(doctor);
     }
 
     public void eliminarDoctor(Long id) {
         Doctor doctor = buscarEntidadPorId(id);
-        doctores.remove(doctor);
+        doctorRepository.delete(doctor);
     }
 
     public DoctorResponseDTO cambiarDisponibilidad(Long id, boolean disponible){
         Doctor doctor =  buscarEntidadPorId(id);
         doctor.setDisponible(disponible);
+        doctorRepository.save(doctor);
         return DoctorMapper.toResponseDTO(doctor);
     }
 
     public List<DoctorResponseDTO> buscarPorEspecialidad(Especialidad especialidad){
-        return doctores.stream()
-                .filter(doctor -> doctor.getEspecialidad().equals(especialidad))
-                .map(DoctorMapper::toResponseDTO)
-                .toList();
+        return doctorRepository.findByEspecialidad(especialidad).stream().map(DoctorMapper::toResponseDTO).toList();
     }
 
 
