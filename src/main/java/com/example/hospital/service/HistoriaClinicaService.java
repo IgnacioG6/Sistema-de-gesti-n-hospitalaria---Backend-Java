@@ -8,6 +8,7 @@ import com.example.hospital.mapper.HistoriaClinicaMapper;
 import com.example.hospital.model.Cita;
 import com.example.hospital.model.HistoriaClinica;
 import com.example.hospital.model.enums.EstadoCita;
+import com.example.hospital.repository.HistoriaClinicaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -18,11 +19,11 @@ import java.util.List;
 public class HistoriaClinicaService {
 
     private final CitaService citaService;
-    private final List<HistoriaClinica> historias = new ArrayList<>();
+    private final HistoriaClinicaRepository historiaRepository;
 
-
-    public HistoriaClinicaService(CitaService citaService) {
+    public HistoriaClinicaService(CitaService citaService, HistoriaClinicaRepository historiaRepository) {
         this.citaService = citaService;
+        this.historiaRepository = historiaRepository;
     }
 
     public HistoriaClinicaResponseDTO crearHistoriaClinica(HistoriaClinicaRequestDTO request){
@@ -32,8 +33,7 @@ public class HistoriaClinicaService {
             throw new ValidacionException("Solo se pueden crear historias de citas completadas");
         }
 
-        boolean yaTieneHistoria = historias.stream()
-                .anyMatch(historia -> historia.getCita().getId().equals(request.idCita()));
+        boolean yaTieneHistoria = historiaRepository.existsByCitaId(request.idCita());
 
         if (yaTieneHistoria) {
             throw new ValidacionException("La cita ya tiene una historia clínica");
@@ -49,43 +49,38 @@ public class HistoriaClinicaService {
         historiaClinica.setTratamientoPrescrito(request.tratamientoPrescrito());
         historiaClinica.setObservaciones(request.observaciones());
 
-        historias.add(historiaClinica);
+        historiaRepository.save(historiaClinica);
 
         return HistoriaClinicaMapper.toResponseDTO(historiaClinica);
     }
 
 
     public List<HistoriaClinicaResponseDTO> listarHistorias(){
-        return historias.stream().map(HistoriaClinicaMapper::toResponseDTO).toList();
+        return historiaRepository.findAll().stream()
+                .map(HistoriaClinicaMapper::toResponseDTO)
+                .toList();
     }
 
     public HistoriaClinicaResponseDTO buscarPorId(Long id) {
-        return historias.stream()
-                .filter(historiaClinica -> historiaClinica.getId().equals(id))
-                .findFirst()
-                .map(HistoriaClinicaMapper::toResponseDTO)
-                .orElseThrow(() -> new EntidadNoEncontradaException("Historia clinica no encontrada con ID: " + id));
+        HistoriaClinica historia = buscarEntidadPorId(id);
+        return  HistoriaClinicaMapper.toResponseDTO(historia);
     }
 
 
     public HistoriaClinica buscarEntidadPorId(Long id) {
-        return historias.stream()
-                .filter(historiaClinica -> historiaClinica.getId().equals(id))
-                .findFirst()
+        return historiaRepository.findById(id)
                 .orElseThrow(() -> new EntidadNoEncontradaException("Historia clinica no encontrada con ID: " + id));
     }
 
 
     public List<HistoriaClinicaResponseDTO> buscarPorPaciente(Long id){
-        return historias.stream()
-                .filter(historiaClinica -> historiaClinica.getPaciente().getId().equals(id))
+        return historiaRepository.findByPacienteId(id).stream()
                 .map(HistoriaClinicaMapper::toResponseDTO)
                 .toList();
     }
 
-    public List<HistoriaClinicaResponseDTO> buscarPorDoctor(Long doctorId) {
-        return historias.stream()
-                .filter(h -> h.getDoctor().getId().equals(doctorId))
+    public List<HistoriaClinicaResponseDTO> buscarPorDoctor(Long citaId) {
+        return historiaRepository.findByDoctorId(citaId).stream()
                 .map(HistoriaClinicaMapper::toResponseDTO)
                 .toList();
     }

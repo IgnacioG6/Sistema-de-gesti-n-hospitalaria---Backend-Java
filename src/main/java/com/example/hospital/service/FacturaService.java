@@ -1,6 +1,7 @@
 package com.example.hospital.service;
 
 import com.example.hospital.dto.ItemsFacturaDTO;
+import com.example.hospital.dto.RecetaItemDTO;
 import com.example.hospital.dto.request.FacturaRequestDTO;
 
 import com.example.hospital.dto.response.FacturaResponseDTO;
@@ -8,22 +9,26 @@ import com.example.hospital.exception.*;
 import com.example.hospital.mapper.FacturaMapper;
 import com.example.hospital.model.Cita;
 import com.example.hospital.model.Factura;
+import com.example.hospital.model.ItemsFactura;
+import com.example.hospital.model.RecetaItem;
 import com.example.hospital.model.enums.EstadoCita;
 import com.example.hospital.model.enums.EstadoFactura;
+import com.example.hospital.repository.FacturaRepository;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class FacturaService {
 
-    private final List<Factura> facturas = new ArrayList<>();
     private final CitaService  citaService;
+    private final FacturaRepository facturaRepository;
 
-    public FacturaService( CitaService citaService) {
+
+    public FacturaService( CitaService citaService, FacturaRepository facturaRepository) {
         this.citaService = citaService;
+        this.facturaRepository = facturaRepository;
     }
 
     public FacturaResponseDTO crearFactura(FacturaRequestDTO facturaRequestDTO) {
@@ -52,77 +57,74 @@ public class FacturaService {
         Factura factura = new Factura();
         factura.setPaciente(cita.getPaciente());
         factura.setCita(cita);
-        factura.setItemsFactura(facturaRequestDTO.items());
         factura.setDescuento(facturaRequestDTO.descuento());
 
+        for (ItemsFacturaDTO itemFactura : facturaRequestDTO.items()) {
+            ItemsFactura item = new ItemsFactura();
+            item.setFactura(factura);
+            item.setDescripcion(itemFactura.descripcion());
+            item.setCantidad(itemFactura.cantidad());
+            item.setPrecioUnitario(itemFactura.precioUnitario());
+            item.setTotal(itemFactura.total());
 
-        facturas.add(factura);
+            factura.getItemsFactura().add(item);
+        }
+
+
+        facturaRepository.save(factura);
 
         return FacturaMapper.toResponseDTO(factura);
     }
 
 
     public List<FacturaResponseDTO> listarFacturas() {
-        return facturas.stream().map(FacturaMapper::toResponseDTO).toList();
+        return facturaRepository.findAll().stream().map(FacturaMapper::toResponseDTO).toList();
     }
 
     public FacturaResponseDTO buscarFacturaPorId(Long id) {
-        Factura factura = buscarPorEntidad(id);
-        return FacturaMapper.toResponseDTO(factura);
+        return FacturaMapper.toResponseDTO(buscarPorEntidad(id));
     }
 
-    public Factura buscarPorEntidad(Long id){
-        return facturas.stream()
-                .filter(factura -> factura.getId().equals(id))
-                .findFirst()
+    protected Factura buscarPorEntidad(Long id){
+        return facturaRepository.findById(id)
                 .orElseThrow(()-> new EntidadNoEncontradaException("Factura no encontrada con id: " + id));
     }
 
     public List<FacturaResponseDTO> buscarFacturasPorPaciente(Long id){
-        return facturas.stream()
-                .filter(factura -> factura.getPaciente().getId().equals(id))
+        return facturaRepository.findByPacienteId(id).stream()
                 .map(FacturaMapper::toResponseDTO)
                 .toList();
     }
 
     public List<FacturaResponseDTO> buscarFacturaPorEstado(EstadoFactura estadoFactura){
-        return facturas.stream()
-                .filter(factura -> estadoFactura.equals(factura.getEstadoFactura()))
+        return facturaRepository.findByEstadoFactura(estadoFactura).stream()
                 .map(FacturaMapper::toResponseDTO)
                 .toList();
     }
 
 
     public FacturaResponseDTO actualizarEstadoFactura(Long id, EstadoFactura nuevoEstado) {
-        Factura factura = buscarPorEntidad(id);
+            Factura factura = buscarPorEntidad(id);
+            EstadoFactura estadoActual = factura.getEstadoFactura();
 
-        EstadoFactura estadoActual = factura.getEstadoFactura();
-
-        switch (estadoActual) {
-            case PENDIENTE:
-                if (nuevoEstado != EstadoFactura.PAGADO &&
-                        nuevoEstado != EstadoFactura.VENCIDO &&
-                        nuevoEstado != EstadoFactura.CANCELADO) {
-                    throw new EstadoInvalidoException("Desde PENDIENTE solo se puede pasar a PAGADO, VENCIDO o CANCELADO");
+            switch (estadoActual) {
+                case PENDIENTE -> {
+                    if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.VENCIDO && nuevoEstado != EstadoFactura.CANCELADO)
+                        throw new EstadoInvalidoException("Cambio de estado inválido desde PENDIENTE");
                 }
-                break;
-
-            case VENCIDO:
-                if (nuevoEstado != EstadoFactura.PAGADO &&
-                        nuevoEstado != EstadoFactura.CANCELADO) {
-                    throw new EstadoInvalidoException("Desde VENCIDO solo se puede pasar a PAGADO o CANCELADO");
+                case VENCIDO -> {
+                    if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.CANCELADO)
+                        throw new EstadoInvalidoException("Cambio de estado inválido desde VENCIDO");
                 }
-                break;
+                case PAGADO, CANCELADO ->
+                        throw new EstadoInvalidoException("No se puede cambiar el estado de una factura " + estadoActual);
+            }
 
-            case PAGADO:
-            case CANCELADO:
-                throw new EstadoInvalidoException("No se puede cambiar el estado de una factura " + estadoActual);
+            factura.setEstadoFactura(nuevoEstado);
+            facturaRepository.save(factura);
+            return FacturaMapper.toResponseDTO(factura);
         }
-
-        factura.setEstadoFactura(nuevoEstado);
-        return FacturaMapper.toResponseDTO(factura);
     }
 
-    }
 
 

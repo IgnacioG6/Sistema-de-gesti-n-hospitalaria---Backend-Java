@@ -8,6 +8,9 @@ import java.util.Optional;
 public interface HistoriaClinicaRepository extends JpaRepository<HistoriaClinica, Long> {
 
     Optional<HistoriaClinica> findByPacienteId(Long id);
-    Optional<HistoriaClinica>findByCitaId(Long id);
+    boolean existsByCitaId(Long citaId);
+    Optional<HistoriaClinica> findByDoctorId(Long id);
+
+
 
 }
