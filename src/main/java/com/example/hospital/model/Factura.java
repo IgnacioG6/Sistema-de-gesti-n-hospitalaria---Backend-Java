@@ -11,7 +11,6 @@ import java.util.List;
 
 @Getter
 @Setter
-@NoArgsConstructor
 @Entity
 @Table(name = "facturas")
 public class Factura {
@@ -21,6 +20,7 @@ public class Factura {
     private Long id;
 
     private String nroFactura;
+
     @ManyToOne
     @JoinColumn(name = "paciente_id")
     private Paciente paciente;
@@ -35,6 +35,7 @@ public class Factura {
     private BigDecimal descuento;
 
     @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
     private EstadoFactura estadoFactura;
 
     private LocalDate fechaEmision;
@@ -52,5 +53,11 @@ public class Factura {
         BigDecimal subtotal = getSubtotal();
         BigDecimal descuentoActual = descuento != null ? descuento : BigDecimal.ZERO;
         return subtotal.subtract(descuentoActual);
+    }
+
+    public Factura() {
+        this.estadoFactura = EstadoFactura.PENDIENTE;
+        this.fechaEmision = LocalDate.now();
+        this.fechaVencimiento = LocalDate.now().plusDays(30);
     }
 }
