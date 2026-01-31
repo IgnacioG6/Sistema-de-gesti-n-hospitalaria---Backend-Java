@@ -10,4 +10,6 @@ import java.util.Optional;
 public interface FacturaRepository extends JpaRepository<Factura, Long> {
     Optional<Factura> findByPacienteId(Long id);
     List<Factura> findByEstadoFactura(EstadoFactura estado);
+    boolean existsByCitaId(Long citaId);
+
 }
