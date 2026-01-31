@@ -1,7 +1,6 @@
 package com.example.hospital.service;
 
 import com.example.hospital.dto.ItemsFacturaDTO;
-import com.example.hospital.dto.RecetaItemDTO;
 import com.example.hospital.dto.request.FacturaRequestDTO;
 
 import com.example.hospital.dto.response.FacturaResponseDTO;
@@ -10,7 +9,6 @@ import com.example.hospital.mapper.FacturaMapper;
 import com.example.hospital.model.Cita;
 import com.example.hospital.model.Factura;
 import com.example.hospital.model.ItemsFactura;
-import com.example.hospital.model.RecetaItem;
 import com.example.hospital.model.enums.EstadoCita;
 import com.example.hospital.model.enums.EstadoFactura;
 import com.example.hospital.repository.FacturaRepository;
@@ -33,6 +31,10 @@ public class FacturaService {
 
     public FacturaResponseDTO crearFactura(FacturaRequestDTO facturaRequestDTO) {
         Cita cita = citaService.buscarEntidadPorId(facturaRequestDTO.citaId());
+
+        if (facturaRepository.existsByCitaId(facturaRequestDTO.citaId())) {
+            throw new ValidacionException("La cita ya tiene una factura");
+        }
 
         if (cita.getEstadoCita() != EstadoCita.COMPLETADO) {
             throw new ValidacionException("La cita debe estar completada");
@@ -71,6 +73,8 @@ public class FacturaService {
         }
 
 
+        facturaRepository.save(factura);
+        factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
         facturaRepository.save(factura);
 
         return FacturaMapper.toResponseDTO(factura);
