@@ -14,7 +14,6 @@ import com.example.hospital.repository.FacturaRepository;
 import com.example.hospital.repository.HistoriaClinicaRepository;
 import org.springframework.stereotype.Service;
 
-import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,19 +23,19 @@ public class CitaService {
 
     private final PacienteService pacienteService;
     private final DoctorService doctorService;
+    private final HistoriaClinicaService historiaClinicaService;
+    private final FacturaService facturaService;
     private final CitaRepository  citaRepository;
-    private final HistoriaClinicaRepository historiaClinicaRepository;
-    private final FacturaRepository facturaRepository;
 
     public CitaService(PacienteService pacienteService, DoctorService doctorService,
-                       CitaRepository citaRepository, HistoriaClinicaRepository historiaClinicaRepository,
-                       FacturaRepository facturaRepository) {
+                       CitaRepository citaRepository,HistoriaClinicaService historiaClinicaService,
+                       FacturaService facturaService) {
 
         this.pacienteService = pacienteService;
         this.doctorService = doctorService;
         this.citaRepository = citaRepository;
-        this.historiaClinicaRepository = historiaClinicaRepository;
-        this.facturaRepository = facturaRepository;
+        this.historiaClinicaService = historiaClinicaService;
+        this.facturaService = facturaService;
     }
 
     public List<CitaResponseDTO> obtenerTodos() {
@@ -66,41 +65,44 @@ public class CitaService {
 
     }
 
-    public CitaResponseDTO cambiarEstado(EstadoCita estado, Long id) {
-        Cita cita = buscarEntidadPorId(id);
-
+    private void validarTransicionEstado(Cita cita, EstadoCita nuevoEstado) {
         switch (cita.getEstadoCita()) {
             case PROGRAMADO:
-                if (estado != EstadoCita.EN_PROCESO && estado != EstadoCita.CANCELADO) {
+                if (nuevoEstado != EstadoCita.EN_PROCESO && nuevoEstado != EstadoCita.CANCELADO)
                     throw new EstadoInvalidoException("Desde PROGRAMADO solo se puede pasar a EN_PROCESO o CANCELADO");
-                }
                 break;
-
             case EN_PROCESO:
-                if (estado != EstadoCita.COMPLETADO && estado != EstadoCita.CANCELADO) {
+                if (nuevoEstado != EstadoCita.COMPLETADO && nuevoEstado != EstadoCita.CANCELADO)
                     throw new EstadoInvalidoException("Desde EN_PROCESO solo se puede pasar a COMPLETADO o CANCELADO");
-                }
                 break;
-
             case COMPLETADO:
             case CANCELADO:
                 throw new EstadoInvalidoException("No se puede cambiar el estado de una cita " + cita.getEstadoCita());
         }
+    }
+
+    private void ejecutarFlujoCitaCompletada(Cita cita) {
+        try {
+            historiaClinicaService.crearHistoriaAutomaticaPorCita(cita);
+            facturaService.crearAutomaticaPorCita(cita);
+        } catch (Exception e) {
+            System.err.println("Error creando historia/factura automática: " + e.getMessage());
+        }
+    }
+
+
+    public CitaResponseDTO cambiarEstado(EstadoCita estado, Long id) {
+        Cita cita = buscarEntidadPorId(id);
+        validarTransicionEstado(cita, estado);
 
         cita.setEstadoCita(estado);
         citaRepository.save(cita);
 
         if (estado == EstadoCita.COMPLETADO) {
-            try {
-                crearHistoriaClinicaAutomatica(cita);
-                crearFacturaAutomatica(cita);
-            } catch (Exception e) {
-                System.err.println("Error creando historia/factura automática: " + e.getMessage());
-            }
+            ejecutarFlujoCitaCompletada(cita);
         }
 
         return CitaMapper.toResponseDTO(cita);
-
     }
 
 
@@ -243,49 +245,4 @@ public class CitaService {
             }
         }
     }
-
-    private void crearHistoriaClinicaAutomatica(Cita cita) {
-        if (historiaClinicaRepository.existsByCitaId(cita.getId())) {
-            return;
-        }
-
-        HistoriaClinica historia = new HistoriaClinica();
-        historia.setPaciente(cita.getPaciente());
-        historia.setDoctor(cita.getDoctor());
-        historia.setCita(cita);
-        historia.setFecha(LocalDateTime.now());
-        historia.setDiagnostico("Pendiente de completar");
-        historia.setSintomas("Pendiente de completar");
-        historia.setTratamientoPrescrito("Pendiente de completar");
-        historia.setObservaciones("Historia clínica generada automáticamente");
-
-        historiaClinicaRepository.save(historia);
-    }
-
-    private void crearFacturaAutomatica(Cita cita) {
-        if (facturaRepository.existsByCitaId(cita.getId())) {
-            return;
-        }
-
-        Factura factura = new Factura();
-        factura.setPaciente(cita.getPaciente());
-        factura.setCita(cita);
-        factura.setDescuento(BigDecimal.ZERO);
-
-        ItemsFactura item = new ItemsFactura();
-        item.setFactura(factura);
-        item.setDescripcion("Consulta médica - " + cita.getDoctor().getEspecialidad());
-        item.setCantidad(1);
-        item.setPrecioUnitario(new BigDecimal("500.00"));
-        item.setTotal(new BigDecimal("500.00"));
-
-        factura.getItemsFactura().add(item);
-
-        facturaRepository.save(factura);
-
-        factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
-        facturaRepository.save(factura);
-    }
-
-
 }
