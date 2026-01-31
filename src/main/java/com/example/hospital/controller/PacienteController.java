@@ -4,6 +4,7 @@ import com.example.hospital.dto.request.PacienteRequestDTO;
 import com.example.hospital.dto.response.PacienteResponseDTO;
 import com.example.hospital.model.enums.Estado;
 import com.example.hospital.service.PacienteService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class PacienteController {
     }
 
     @PostMapping
-    public ResponseEntity<PacienteResponseDTO> registrarPaciente(@RequestBody PacienteRequestDTO paciente) {
+    public ResponseEntity<PacienteResponseDTO> registrarPaciente(@Valid @RequestBody PacienteRequestDTO paciente) {
         PacienteResponseDTO pacienteDto = pacienteService.crearPaciente(paciente);
         return ResponseEntity.status(HttpStatus.CREATED).body(pacienteDto);
     }
@@ -44,7 +45,7 @@ public class PacienteController {
     @PutMapping("/{id}")
     public ResponseEntity<PacienteResponseDTO> actualizarPaciente(
             @PathVariable Long id,
-            @RequestBody PacienteRequestDTO paciente
+            @Valid @RequestBody PacienteRequestDTO paciente
     ) {
         return ResponseEntity.ok(pacienteService.actualizarPaciente(id, paciente));
     }

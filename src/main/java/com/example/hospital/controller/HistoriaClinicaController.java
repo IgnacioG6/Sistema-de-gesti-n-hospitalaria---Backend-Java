@@ -3,6 +3,7 @@ package com.example.hospital.controller;
 import com.example.hospital.dto.request.HistoriaClinicaRequestDTO;
 import com.example.hospital.dto.response.HistoriaClinicaResponseDTO;
 import com.example.hospital.service.HistoriaClinicaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class HistoriaClinicaController {
     }
 
     @PostMapping
-    public ResponseEntity<HistoriaClinicaResponseDTO> CrearHistoriaClinica(@RequestBody HistoriaClinicaRequestDTO request) {
+    public ResponseEntity<HistoriaClinicaResponseDTO> CrearHistoriaClinica(@Valid @RequestBody HistoriaClinicaRequestDTO request) {
         HistoriaClinicaResponseDTO historiaClinica = historiaClinicaService.crearHistoriaClinica(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(historiaClinica);
     }

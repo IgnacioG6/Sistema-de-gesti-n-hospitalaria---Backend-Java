@@ -5,6 +5,7 @@ import com.example.hospital.dto.request.FacturaRequestDTO;
 import com.example.hospital.dto.response.FacturaResponseDTO;
 import com.example.hospital.model.enums.EstadoFactura;
 import com.example.hospital.service.FacturaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,7 +23,7 @@ public class FacturaController {
     }
 
     @PostMapping
-    public ResponseEntity<FacturaResponseDTO> CrearFactura(@RequestBody FacturaRequestDTO facturaRequestDTO) {
+    public ResponseEntity<FacturaResponseDTO> CrearFactura(@Valid @RequestBody FacturaRequestDTO facturaRequestDTO) {
         FacturaResponseDTO factura = facturaService.crearFactura(facturaRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(factura);
     }
@@ -51,7 +52,7 @@ public class FacturaController {
     }
 
     @PutMapping("/{id}/estado")
-    public ResponseEntity<FacturaResponseDTO> actualizarEstado(@PathVariable Long id, @RequestBody CambiarEstadoFacturaRequest request) {
+    public ResponseEntity<FacturaResponseDTO> actualizarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoFacturaRequest request) {
         return ResponseEntity.ok(facturaService.actualizarEstadoFactura(id, request.estado()));
     }
 

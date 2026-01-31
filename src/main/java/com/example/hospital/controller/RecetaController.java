@@ -4,6 +4,7 @@ import com.example.hospital.dto.request.RecetaRequestDTO;
 import com.example.hospital.dto.response.RecetaResponseDTO;
 import com.example.hospital.model.Receta;
 import com.example.hospital.service.RecetaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,7 @@ public class RecetaController {
     }
 
     @PostMapping
-    public ResponseEntity<RecetaResponseDTO> crearReceta(@RequestBody RecetaRequestDTO recetaRequest) {
+    public ResponseEntity<RecetaResponseDTO> crearReceta(@Valid @RequestBody RecetaRequestDTO recetaRequest) {
         RecetaResponseDTO receta = recetaService.crearReceta(recetaRequest);
         return  ResponseEntity.status(HttpStatus.CREATED).body(receta);
     }

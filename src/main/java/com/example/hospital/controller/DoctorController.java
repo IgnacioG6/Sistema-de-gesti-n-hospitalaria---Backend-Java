@@ -4,6 +4,7 @@ import com.example.hospital.dto.request.DoctorRequestDTO;
 import com.example.hospital.dto.response.DoctorResponseDTO;
 import com.example.hospital.model.enums.Especialidad;
 import com.example.hospital.service.DoctorService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -37,14 +38,14 @@ public class DoctorController {
     }
 
     @PostMapping
-    public ResponseEntity<DoctorResponseDTO> registrarDoctor(@RequestBody DoctorRequestDTO doctorRequestDTO){
+    public ResponseEntity<DoctorResponseDTO> registrarDoctor(@Valid @RequestBody DoctorRequestDTO doctorRequestDTO){
         DoctorResponseDTO doctor = doctorService.registarDoctor(doctorRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(doctor);
     }
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<DoctorResponseDTO> actualizarDoctor(@PathVariable Long id, @RequestBody DoctorRequestDTO doctorRequestDTO){
+    public ResponseEntity<DoctorResponseDTO> actualizarDoctor(@PathVariable Long id,@Valid @RequestBody DoctorRequestDTO doctorRequestDTO){
         DoctorResponseDTO doctor =  doctorService.actualizarDoctor(id, doctorRequestDTO);
         return ResponseEntity.ok(doctor);
     }

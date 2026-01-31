@@ -5,6 +5,7 @@ import com.example.hospital.dto.request.CitaRequestDTO;
 import com.example.hospital.dto.response.CitaResponseDTO;
 import com.example.hospital.model.enums.EstadoCita;
 import com.example.hospital.service.CitaService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -50,20 +51,20 @@ public class CitaController {
 
 
     @PostMapping
-    public ResponseEntity<CitaResponseDTO> registrarCita(@RequestBody CitaRequestDTO citaRequest) {
+    public ResponseEntity<CitaResponseDTO> registrarCita(@Valid @RequestBody CitaRequestDTO citaRequest) {
         CitaResponseDTO cita = citaService.crearCita(citaRequest);
         return ResponseEntity.status(HttpStatus.CREATED).body(cita);
     }
 
 
     @PutMapping("/{id}")
-    public ResponseEntity<CitaResponseDTO> actualizarCita(@PathVariable Long id, @RequestBody CitaRequestDTO citaRequest) {
+    public ResponseEntity<CitaResponseDTO> actualizarCita(@PathVariable Long id,@Valid @RequestBody CitaRequestDTO citaRequest) {
         CitaResponseDTO cita = citaService.actualizarCita(id, citaRequest);
         return ResponseEntity.ok(cita);
     }
 
     @PutMapping("/{id}/estado")
-    public ResponseEntity<CitaResponseDTO> cambiarEstadoCita(@PathVariable Long id,@RequestBody CambiarEstadoCitaRequest request) {
+    public ResponseEntity<CitaResponseDTO> cambiarEstadoCita(@PathVariable Long id,@Valid @RequestBody CambiarEstadoCitaRequest request) {
         return ResponseEntity.ok(citaService.cambiarEstado(request.estado(), id));
     }
 
