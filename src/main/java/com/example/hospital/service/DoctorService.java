@@ -35,42 +35,21 @@ public class DoctorService {
     }
 
     public DoctorResponseDTO buscarDoctorPorLicencia(String licencia) {
-        if (licencia == null || licencia.isBlank()) {
-            throw new IllegalArgumentException("La licencia médica es obligatoria");
-        }
-
         return doctorRepository.findByLicenciaMedica(licencia)
                 .map(DoctorMapper::toResponseDTO)
                 .orElseThrow(() -> new EntidadNoEncontradaException("Doctor no encontrado con Licencia: " + licencia));
     }
 
-    public DoctorResponseDTO registarDoctor(DoctorRequestDTO doctorRequestDTO) {
-        Doctor doctor = new Doctor();
-        doctor.setNombre(doctorRequestDTO.nombre());
-        doctor.setLicenciaMedica(doctorRequestDTO.licenciaMedica());
-        doctor.setEspecialidad(doctorRequestDTO.especialidad());
-        doctor.setEmail(doctorRequestDTO.email());
-        doctor.setTelefono(doctorRequestDTO.telefono());
-        doctor.setAñosExperiencia(doctorRequestDTO.añosExperiencia());
-        doctor.setHorarioAtencion(doctorRequestDTO.horarioAtencion());
-        doctor.setDisponible(true);
-
+    public DoctorResponseDTO registarDoctor(DoctorRequestDTO dto) {
+        Doctor doctor = DoctorMapper.toEntity(dto);
         doctorRepository.save(doctor);
         return DoctorMapper.toResponseDTO(doctor);
     }
 
 
-    public DoctorResponseDTO actualizarDoctor(Long id, DoctorRequestDTO dto){
+    public DoctorResponseDTO actualizarDoctor(Long id, DoctorRequestDTO dto) {
         Doctor doctor = buscarEntidadPorId(id);
-
-        doctor.setNombre(dto.nombre());
-        doctor.setLicenciaMedica(dto.licenciaMedica());
-        doctor.setEspecialidad(dto.especialidad());
-        doctor.setTelefono(dto.telefono());
-        doctor.setEmail(dto.email());
-        doctor.setAñosExperiencia(dto.añosExperiencia());
-        doctor.setHorarioAtencion(dto.horarioAtencion());
-
+        DoctorMapper.updateEntity(doctor, dto);
         doctorRepository.save(doctor);
         return DoctorMapper.toResponseDTO(doctor);
     }
