@@ -6,14 +6,15 @@ import com.example.hospital.exception.EntidadNoEncontradaException;
 import com.example.hospital.exception.EstadoInvalidoException;
 import com.example.hospital.exception.ValidacionException;
 import com.example.hospital.mapper.CitaMapper;
-import com.example.hospital.model.Cita;
-import com.example.hospital.model.Doctor;
-import com.example.hospital.model.Paciente;
+import com.example.hospital.model.*;
 import com.example.hospital.model.enums.Estado;
 import com.example.hospital.model.enums.EstadoCita;
 import com.example.hospital.repository.CitaRepository;
+import com.example.hospital.repository.FacturaRepository;
+import com.example.hospital.repository.HistoriaClinicaRepository;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -24,13 +25,19 @@ public class CitaService {
     private final PacienteService pacienteService;
     private final DoctorService doctorService;
     private final CitaRepository  citaRepository;
+    private final HistoriaClinicaRepository historiaClinicaRepository;
+    private final FacturaRepository facturaRepository;
 
-    public CitaService(PacienteService pacienteService, DoctorService doctorService, CitaRepository citaRepository) {
+    public CitaService(PacienteService pacienteService, DoctorService doctorService,
+                       CitaRepository citaRepository, HistoriaClinicaRepository historiaClinicaRepository,
+                       FacturaRepository facturaRepository) {
+
         this.pacienteService = pacienteService;
         this.doctorService = doctorService;
         this.citaRepository = citaRepository;
+        this.historiaClinicaRepository = historiaClinicaRepository;
+        this.facturaRepository = facturaRepository;
     }
-
 
     public List<CitaResponseDTO> obtenerTodos() {
         return citaRepository.findAll().stream()
@@ -82,6 +89,16 @@ public class CitaService {
 
         cita.setEstadoCita(estado);
         citaRepository.save(cita);
+
+        if (estado == EstadoCita.COMPLETADO) {
+            try {
+                crearHistoriaClinicaAutomatica(cita);
+                crearFacturaAutomatica(cita);
+            } catch (Exception e) {
+                System.err.println("Error creando historia/factura automática: " + e.getMessage());
+            }
+        }
+
         return CitaMapper.toResponseDTO(cita);
 
     }
@@ -225,6 +242,49 @@ public class CitaService {
                 throw new ValidacionException("El doctor ya tiene una cita en ese horario");
             }
         }
+    }
+
+    private void crearHistoriaClinicaAutomatica(Cita cita) {
+        if (historiaClinicaRepository.existsByCitaId(cita.getId())) {
+            return;
+        }
+
+        HistoriaClinica historia = new HistoriaClinica();
+        historia.setPaciente(cita.getPaciente());
+        historia.setDoctor(cita.getDoctor());
+        historia.setCita(cita);
+        historia.setFecha(LocalDateTime.now());
+        historia.setDiagnostico("Pendiente de completar");
+        historia.setSintomas("Pendiente de completar");
+        historia.setTratamientoPrescrito("Pendiente de completar");
+        historia.setObservaciones("Historia clínica generada automáticamente");
+
+        historiaClinicaRepository.save(historia);
+    }
+
+    private void crearFacturaAutomatica(Cita cita) {
+        if (facturaRepository.existsByCitaId(cita.getId())) {
+            return;
+        }
+
+        Factura factura = new Factura();
+        factura.setPaciente(cita.getPaciente());
+        factura.setCita(cita);
+        factura.setDescuento(BigDecimal.ZERO);
+
+        ItemsFactura item = new ItemsFactura();
+        item.setFactura(factura);
+        item.setDescripcion("Consulta médica - " + cita.getDoctor().getEspecialidad());
+        item.setCantidad(1);
+        item.setPrecioUnitario(new BigDecimal("500.00"));
+        item.setTotal(new BigDecimal("500.00"));
+
+        factura.getItemsFactura().add(item);
+
+        facturaRepository.save(factura);
+
+        factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
+        facturaRepository.save(factura);
     }
 
 
