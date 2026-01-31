@@ -8,26 +8,27 @@ import com.example.hospital.mapper.HistoriaClinicaMapper;
 import com.example.hospital.model.Cita;
 import com.example.hospital.model.HistoriaClinica;
 import com.example.hospital.model.enums.EstadoCita;
+import com.example.hospital.repository.CitaRepository;
 import com.example.hospital.repository.HistoriaClinicaRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class HistoriaClinicaService {
 
-    private final CitaService citaService;
+    private final CitaRepository citaRepository;
     private final HistoriaClinicaRepository historiaRepository;
 
-    public HistoriaClinicaService(CitaService citaService, HistoriaClinicaRepository historiaRepository) {
-        this.citaService = citaService;
+    public HistoriaClinicaService(CitaRepository citaRepository, HistoriaClinicaRepository historiaRepository) {
+        this.citaRepository = citaRepository;
         this.historiaRepository = historiaRepository;
     }
 
     public HistoriaClinicaResponseDTO crearHistoriaClinica(HistoriaClinicaRequestDTO request){
-        Cita cita = citaService.buscarEntidadPorId(request.idCita());
+        Cita cita = citaRepository.findById(request.idCita())
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + request.idCita()));
 
         if (cita.getEstadoCita() != EstadoCita.COMPLETADO) {
             throw new ValidacionException("Solo se pueden crear historias de citas completadas");
@@ -83,6 +84,25 @@ public class HistoriaClinicaService {
         return historiaRepository.findByDoctorId(citaId).stream()
                 .map(HistoriaClinicaMapper::toResponseDTO)
                 .toList();
+    }
+
+
+    public HistoriaClinica crearHistoriaAutomaticaPorCita(Cita cita) {
+        if (historiaRepository.existsByCitaId(cita.getId())) {
+            return null;
+        }
+
+        HistoriaClinica historia = new HistoriaClinica();
+        historia.setPaciente(cita.getPaciente());
+        historia.setDoctor(cita.getDoctor());
+        historia.setCita(cita);
+        historia.setFecha(LocalDateTime.now());
+        historia.setDiagnostico("Pendiente de completar");
+        historia.setSintomas("Pendiente de completar");
+        historia.setTratamientoPrescrito("Pendiente de completar");
+        historia.setObservaciones("Historia clínica generada automáticamente");
+
+        return historiaRepository.save(historia);
     }
 
 

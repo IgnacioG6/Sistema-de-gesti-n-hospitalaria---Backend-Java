@@ -11,6 +11,7 @@ import com.example.hospital.model.Factura;
 import com.example.hospital.model.ItemsFactura;
 import com.example.hospital.model.enums.EstadoCita;
 import com.example.hospital.model.enums.EstadoFactura;
+import com.example.hospital.repository.CitaRepository;
 import com.example.hospital.repository.FacturaRepository;
 import org.springframework.stereotype.Service;
 
@@ -20,17 +21,17 @@ import java.util.List;
 @Service
 public class FacturaService {
 
-    private final CitaService  citaService;
+    private final CitaRepository citaRepository;
     private final FacturaRepository facturaRepository;
 
-
-    public FacturaService( CitaService citaService, FacturaRepository facturaRepository) {
-        this.citaService = citaService;
+    public FacturaService(CitaRepository citaRepository, FacturaRepository facturaRepository) {
+        this.citaRepository = citaRepository;
         this.facturaRepository = facturaRepository;
     }
 
     public FacturaResponseDTO crearFactura(FacturaRequestDTO facturaRequestDTO) {
-        Cita cita = citaService.buscarEntidadPorId(facturaRequestDTO.citaId());
+        Cita cita = citaRepository.findById(facturaRequestDTO.citaId())
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + facturaRequestDTO.citaId()));
 
         if (facturaRepository.existsByCitaId(facturaRequestDTO.citaId())) {
             throw new ValidacionException("La cita ya tiene una factura");
@@ -49,7 +50,7 @@ public class FacturaService {
         }
 
         BigDecimal subtotal = facturaRequestDTO.items().stream()
-                .map(ItemsFacturaDTO::total)
+                .map(item -> item.precioUnitario().multiply(BigDecimal.valueOf(item.cantidad())))
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
 
         if (facturaRequestDTO.descuento().compareTo(subtotal) > 0) {
@@ -67,7 +68,7 @@ public class FacturaService {
             item.setDescripcion(itemFactura.descripcion());
             item.setCantidad(itemFactura.cantidad());
             item.setPrecioUnitario(itemFactura.precioUnitario());
-            item.setTotal(itemFactura.total());
+            item.setTotal(itemFactura.precioUnitario().multiply(BigDecimal.valueOf(itemFactura.cantidad())));
 
             factura.getItemsFactura().add(item);
         }
@@ -128,6 +129,30 @@ public class FacturaService {
             facturaRepository.save(factura);
             return FacturaMapper.toResponseDTO(factura);
         }
+
+    public Factura crearAutomaticaPorCita(Cita cita) {
+        if (facturaRepository.existsByCitaId(cita.getId())) {
+            return null;
+        }
+
+        Factura factura = new Factura();
+        factura.setPaciente(cita.getPaciente());
+        factura.setCita(cita);
+        factura.setDescuento(BigDecimal.ZERO);
+
+        ItemsFactura item = new ItemsFactura();
+        item.setFactura(factura);
+        item.setDescripcion("Consulta médica - " + cita.getDoctor().getEspecialidad());
+        item.setCantidad(1);
+        item.setPrecioUnitario(new BigDecimal("500.00"));
+        item.setTotal(new BigDecimal("500.00"));
+        factura.getItemsFactura().add(item);
+
+        facturaRepository.save(factura);
+        factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
+        return facturaRepository.save(factura);
+    }
+
     }
 
 

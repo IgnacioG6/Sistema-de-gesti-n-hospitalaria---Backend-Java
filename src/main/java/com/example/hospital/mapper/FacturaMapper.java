@@ -16,8 +16,7 @@ public class FacturaMapper {
                 .map(item -> new ItemsFacturaDTO(
                         item.getDescripcion(),
                         item.getCantidad(),
-                        item.getPrecioUnitario(),
-                        item.getTotal()
+                        item.getPrecioUnitario()
                 ))
                 .toList();
 
