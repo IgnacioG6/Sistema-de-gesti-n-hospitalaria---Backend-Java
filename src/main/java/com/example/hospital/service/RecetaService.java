@@ -26,38 +26,11 @@ public class RecetaService {
         this.recetaRepository = recetaRepository;
     }
 
-    public RecetaResponseDTO crearReceta(RecetaRequestDTO request) {
-        HistoriaClinica historia = historiaClinicaService.buscarEntidadPorId(request.historiaClinicaId());
-
-        if (request.medicamentos().isEmpty()) {
-            throw new ValidacionException("La lista de medicamentos no puede estar vacia");
-        }
-
-        if (request.validaHasta().isBefore(LocalDate.now())) {
-            throw new ValidacionException("La fecha debe ser futura");
-        }
-
-        Receta receta = new Receta();
-        receta.setHistoriaClinica(historia);
-        receta.setInstruccionesGenerales(request.instruccionesGenerales());
-        receta.setValidaHasta(request.validaHasta());
-
-        for (RecetaItemDTO itemDTO : request.medicamentos()) {
-            RecetaItem item = new RecetaItem();
-            item.setReceta(receta);
-            item.setMedicamento(itemDTO.medicamento());
-            item.setDosis(itemDTO.dosis());
-            item.setFrecuencia(itemDTO.frecuencia());
-            item.setDuracionDias(itemDTO.duracionDias());
-            item.setInstrucciones(itemDTO.instrucciones());
-
-            receta.getMedicamentos().add(item);
-        }
-
+    public RecetaResponseDTO crearReceta(RecetaRequestDTO dto) {
+        HistoriaClinica historia = historiaClinicaService.buscarEntidadPorId(dto.historiaClinicaId());
+        Receta receta = RecetaMapper.toEntity(dto, historia);
         recetaRepository.save(receta);
-
         return RecetaMapper.toResponseDTO(receta);
-
     }
 
     public List<RecetaResponseDTO> listarRecetas(){

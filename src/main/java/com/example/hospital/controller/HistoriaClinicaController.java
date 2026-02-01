@@ -1,5 +1,6 @@
 package com.example.hospital.controller;
 
+import com.example.hospital.dto.request.ActualizarHistoriaClinicaRequestDTO;
 import com.example.hospital.dto.request.HistoriaClinicaRequestDTO;
 import com.example.hospital.dto.response.HistoriaClinicaResponseDTO;
 import com.example.hospital.service.HistoriaClinicaService;
@@ -21,7 +22,7 @@ public class HistoriaClinicaController {
     }
 
     @PostMapping
-    public ResponseEntity<HistoriaClinicaResponseDTO> CrearHistoriaClinica(@Valid @RequestBody HistoriaClinicaRequestDTO request) {
+    public ResponseEntity<HistoriaClinicaResponseDTO> crearHistoriaClinica(@Valid @RequestBody HistoriaClinicaRequestDTO request) {
         HistoriaClinicaResponseDTO historiaClinica = historiaClinicaService.crearHistoriaClinica(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(historiaClinica);
     }
@@ -48,6 +49,14 @@ public class HistoriaClinicaController {
     public ResponseEntity<List<HistoriaClinicaResponseDTO>> buscarHistoriaPorDoctor(@PathVariable Long id) {
         List<HistoriaClinicaResponseDTO> historia = historiaClinicaService.buscarPorDoctor(id);
         return ResponseEntity.status(HttpStatus.OK).body(historia);
+    }
+
+    // En HistoriaClinicaController
+    @PutMapping("/{id}")
+    public ResponseEntity<HistoriaClinicaResponseDTO> actualizarHistoriaClinica(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarHistoriaClinicaRequestDTO request) {
+        return ResponseEntity.ok(historiaClinicaService.actualizarHistoriaClinica(id, request));
     }
 
 

@@ -24,33 +24,28 @@ public class RecetaController {
     @PostMapping
     public ResponseEntity<RecetaResponseDTO> crearReceta(@Valid @RequestBody RecetaRequestDTO recetaRequest) {
         RecetaResponseDTO receta = recetaService.crearReceta(recetaRequest);
-        return  ResponseEntity.status(HttpStatus.CREATED).body(receta);
+        return ResponseEntity.status(HttpStatus.CREATED).body(receta);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<RecetaResponseDTO> buscarRecetaPorId(@PathVariable Long id) {
-        RecetaResponseDTO receta = recetaService.buscarRecetaPorId(id);
-        return  ResponseEntity.status(HttpStatus.OK).body(receta);
+        return ResponseEntity.ok(recetaService.buscarRecetaPorId(id));
     }
 
     @GetMapping
     public ResponseEntity<List<RecetaResponseDTO>> listarRecetas() {
-        return ResponseEntity.status(HttpStatus.OK).body(recetaService.listarRecetas());
+        return ResponseEntity.ok(recetaService.listarRecetas());
     }
-
 
     @GetMapping("/pacientes/{id}")
     public ResponseEntity<List<RecetaResponseDTO>> buscarRecetaPorIdPaciente(@PathVariable Long id) {
-        List<RecetaResponseDTO> recetas = recetaService.buscarRecetaPorPaciente(id);
-        return ResponseEntity.status(HttpStatus.OK).body(recetas);
+        return ResponseEntity.ok(recetaService.buscarRecetaPorPaciente(id));
     }
 
     @GetMapping("/historias-clinicas/{id}")
     public ResponseEntity<List<RecetaResponseDTO>> buscarRecetaPorHistoriaClinica(@PathVariable Long id) {
-        List<RecetaResponseDTO> receta = recetaService.buscarRecetaPorHistoriaClinica(id);
-        return ResponseEntity.status(HttpStatus.OK).body(receta);
+        return ResponseEntity.ok(recetaService.buscarRecetaPorHistoriaClinica(id));
     }
-
 
 
 

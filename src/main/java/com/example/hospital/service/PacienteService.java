@@ -45,35 +45,15 @@ public class PacienteService {
         return PacienteMapper.toResponseDTO(paciente);
     }
 
-    public PacienteResponseDTO crearPaciente(PacienteRequestDTO request) {
-        Paciente paciente = new Paciente();
-        paciente.setDni(request.dni());
-        paciente.setNombre(request.nombre());
-        paciente.setFechaNacimiento(request.fechaNacimiento());
-        paciente.setGenero(request.genero());
-        paciente.setEmail(request.email());
-        paciente.setTelefono(request.telefono());
-        paciente.setDireccion(request.direccion());
-        paciente.setTipoSangre(request.tipoSangre());
-        paciente.setAlergias(request.alergias());
-        paciente.setEstado(Estado.ACTIVO);
-
+    public PacienteResponseDTO crearPaciente(PacienteRequestDTO dto) {
+        Paciente paciente = PacienteMapper.toEntity(dto);
         pacienteRepository.save(paciente);
         return PacienteMapper.toResponseDTO(paciente);
     }
 
-    public PacienteResponseDTO actualizarPaciente(Long id, PacienteRequestDTO request) {
+    public PacienteResponseDTO actualizarPaciente(Long id, PacienteRequestDTO dto) {
         Paciente paciente = buscarEntidadPorId(id);
-
-        paciente.setNombre(request.nombre());
-        paciente.setFechaNacimiento(request.fechaNacimiento());
-        paciente.setGenero(request.genero());
-        paciente.setEmail(request.email());
-        paciente.setTelefono(request.telefono());
-        paciente.setDireccion(request.direccion());
-        paciente.setTipoSangre(request.tipoSangre());
-        paciente.setAlergias(request.alergias());
-
+        PacienteMapper.updateEntity(paciente, dto);
         pacienteRepository.save(paciente);
         return PacienteMapper.toResponseDTO(paciente);
     }

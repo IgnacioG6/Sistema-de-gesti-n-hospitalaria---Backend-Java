@@ -16,7 +16,7 @@ import java.util.List;
 @RequestMapping("/api/cita")
 public class CitaController {
 
-    private CitaService citaService;
+    private final CitaService citaService;
 
     public CitaController(CitaService citaService) {
         this.citaService = citaService;
@@ -29,18 +29,18 @@ public class CitaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<CitaResponseDTO> BuscarCita(@PathVariable Long id) {
+    public ResponseEntity<CitaResponseDTO> buscarCita(@PathVariable Long id) {
         return ResponseEntity.ok(citaService.buscarPorId(id));
     }
 
 
     @GetMapping("/pacientes/{id}")
-    public ResponseEntity<List<CitaResponseDTO>> BuscarCitasPorPaciente(@PathVariable Long id){
+    public ResponseEntity<List<CitaResponseDTO>> buscarCitasPorPaciente(@PathVariable Long id){
         return ResponseEntity.ok(citaService.buscarPorPaciente(id));
     }
 
     @GetMapping("/doctores/{id}")
-    public ResponseEntity<List<CitaResponseDTO>> BuscarCitasPorDoctor(@PathVariable Long id){
+    public ResponseEntity<List<CitaResponseDTO>> buscarCitasPorDoctor(@PathVariable Long id){
         return ResponseEntity.ok(citaService.buscarPorDoctor(id));
     }
 

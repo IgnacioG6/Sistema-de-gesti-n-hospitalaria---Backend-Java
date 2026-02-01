@@ -1,6 +1,7 @@
 package com.example.hospital.service;
 
 import com.example.hospital.dto.ItemsFacturaDTO;
+import com.example.hospital.dto.request.ActualizarFacturaRequestDTO;
 import com.example.hospital.dto.request.FacturaRequestDTO;
 
 import com.example.hospital.dto.response.FacturaResponseDTO;
@@ -29,56 +30,40 @@ public class FacturaService {
         this.facturaRepository = facturaRepository;
     }
 
-    public FacturaResponseDTO crearFactura(FacturaRequestDTO facturaRequestDTO) {
-        Cita cita = citaRepository.findById(facturaRequestDTO.citaId())
-                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + facturaRequestDTO.citaId()));
+    public FacturaResponseDTO crearFactura(FacturaRequestDTO dto) {
+        Cita cita = buscarCitaValidada(dto.citaId());
+        validarDescuento(dto, cita);
 
-        if (facturaRepository.existsByCitaId(facturaRequestDTO.citaId())) {
-            throw new ValidacionException("La cita ya tiene una factura");
-        }
-
-        if (cita.getEstadoCita() != EstadoCita.COMPLETADO) {
-            throw new ValidacionException("La cita debe estar completada");
-        }
-
-        if (facturaRequestDTO.items().isEmpty()) {
-            throw new ValidacionException("La factura debe tener al menos un item");
-        }
-
-        if (facturaRequestDTO.descuento().compareTo(BigDecimal.ZERO) < 0) {
-            throw new ValidacionException("El descuento no puede ser negativo");
-        }
-
-        BigDecimal subtotal = facturaRequestDTO.items().stream()
-                .map(item -> item.precioUnitario().multiply(BigDecimal.valueOf(item.cantidad())))
-                .reduce(BigDecimal.ZERO, BigDecimal::add);
-
-        if (facturaRequestDTO.descuento().compareTo(subtotal) > 0) {
-            throw new ValidacionException("El descuento no puede ser mayor que el subtotal");
-        }
-
-        Factura factura = new Factura();
-        factura.setPaciente(cita.getPaciente());
-        factura.setCita(cita);
-        factura.setDescuento(facturaRequestDTO.descuento());
-
-        for (ItemsFacturaDTO itemFactura : facturaRequestDTO.items()) {
-            ItemsFactura item = new ItemsFactura();
-            item.setFactura(factura);
-            item.setDescripcion(itemFactura.descripcion());
-            item.setCantidad(itemFactura.cantidad());
-            item.setPrecioUnitario(itemFactura.precioUnitario());
-            item.setTotal(itemFactura.precioUnitario().multiply(BigDecimal.valueOf(itemFactura.cantidad())));
-
-            factura.getItemsFactura().add(item);
-        }
-
+        Factura factura = FacturaMapper.toEntity(dto, cita);
 
         facturaRepository.save(factura);
         factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
         facturaRepository.save(factura);
 
         return FacturaMapper.toResponseDTO(factura);
+    }
+
+    private Cita buscarCitaValidada(Long citaId) {
+        Cita cita = citaRepository.findById(citaId)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + citaId));
+
+        if (facturaRepository.existsByCitaId(citaId)) {
+            throw new ValidacionException("La cita ya tiene una factura");
+        }
+        if (cita.getEstadoCita() != EstadoCita.COMPLETADO) {
+            throw new ValidacionException("La cita debe estar completada");
+        }
+        return cita;
+    }
+
+    private void validarDescuento(FacturaRequestDTO dto, Cita cita) {
+        BigDecimal subtotal = dto.items().stream()
+                .map(item -> item.precioUnitario().multiply(BigDecimal.valueOf(item.cantidad())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (dto.descuento().compareTo(subtotal) > 0) {
+            throw new ValidacionException("El descuento no puede ser mayor que el subtotal");
+        }
     }
 
 
@@ -109,30 +94,32 @@ public class FacturaService {
 
 
     public FacturaResponseDTO actualizarEstadoFactura(Long id, EstadoFactura nuevoEstado) {
-            Factura factura = buscarPorEntidad(id);
-            EstadoFactura estadoActual = factura.getEstadoFactura();
+        Factura factura = buscarPorEntidad(id);
+        validarTransicionEstado(factura, nuevoEstado);
 
-            switch (estadoActual) {
-                case PENDIENTE -> {
-                    if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.VENCIDO && nuevoEstado != EstadoFactura.CANCELADO)
-                        throw new EstadoInvalidoException("Cambio de estado inválido desde PENDIENTE");
-                }
-                case VENCIDO -> {
-                    if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.CANCELADO)
-                        throw new EstadoInvalidoException("Cambio de estado inválido desde VENCIDO");
-                }
-                case PAGADO, CANCELADO ->
-                        throw new EstadoInvalidoException("No se puede cambiar el estado de una factura " + estadoActual);
+        factura.setEstadoFactura(nuevoEstado);
+        facturaRepository.save(factura);
+        return FacturaMapper.toResponseDTO(factura);
+    }
+
+    private void validarTransicionEstado(Factura factura, EstadoFactura nuevoEstado) {
+        switch (factura.getEstadoFactura()) {
+            case PENDIENTE -> {
+                if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.VENCIDO && nuevoEstado != EstadoFactura.CANCELADO)
+                    throw new EstadoInvalidoException("Cambio de estado inválido desde PENDIENTE");
             }
-
-            factura.setEstadoFactura(nuevoEstado);
-            facturaRepository.save(factura);
-            return FacturaMapper.toResponseDTO(factura);
+            case VENCIDO -> {
+                if (nuevoEstado != EstadoFactura.PAGADO && nuevoEstado != EstadoFactura.CANCELADO)
+                    throw new EstadoInvalidoException("Cambio de estado inválido desde VENCIDO");
+            }
+            case PAGADO, CANCELADO ->
+                    throw new EstadoInvalidoException("No se puede cambiar el estado de una factura " + factura.getEstadoFactura());
         }
+    }
 
-    public Factura crearAutomaticaPorCita(Cita cita) {
+    public void crearAutomaticaPorCita(Cita cita) {
         if (facturaRepository.existsByCitaId(cita.getId())) {
-            return null;
+            return ;
         }
 
         Factura factura = new Factura();
@@ -150,7 +137,26 @@ public class FacturaService {
 
         facturaRepository.save(factura);
         factura.setNroFactura(String.format("FAC-%05d", factura.getId()));
-        return facturaRepository.save(factura);
+        facturaRepository.save(factura);
+        ;
+    }
+
+    public FacturaResponseDTO actualizarFactura(Long id, ActualizarFacturaRequestDTO dto) {
+        Factura factura = buscarPorEntidad(id);
+        validarDescuentoActualizacion(factura, dto);
+        FacturaMapper.updateEntity(factura, dto);
+        facturaRepository.save(factura);
+        return FacturaMapper.toResponseDTO(factura);
+    }
+
+    private void validarDescuentoActualizacion(Factura factura, ActualizarFacturaRequestDTO dto) {
+        BigDecimal subtotal = dto.items().stream()
+                .map(item -> item.precioUnitario().multiply(BigDecimal.valueOf(item.cantidad())))
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        if (dto.descuento().compareTo(subtotal) > 0) {
+            throw new ValidacionException("El descuento no puede ser mayor que el subtotal");
+        }
     }
 
     }

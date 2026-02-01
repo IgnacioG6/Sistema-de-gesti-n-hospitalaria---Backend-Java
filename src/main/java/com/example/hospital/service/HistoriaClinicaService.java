@@ -1,5 +1,6 @@
 package com.example.hospital.service;
 
+import com.example.hospital.dto.request.ActualizarHistoriaClinicaRequestDTO;
 import com.example.hospital.dto.request.HistoriaClinicaRequestDTO;
 import com.example.hospital.dto.response.HistoriaClinicaResponseDTO;
 import com.example.hospital.exception.EntidadNoEncontradaException;
@@ -26,33 +27,25 @@ public class HistoriaClinicaService {
         this.historiaRepository = historiaRepository;
     }
 
-    public HistoriaClinicaResponseDTO crearHistoriaClinica(HistoriaClinicaRequestDTO request){
-        Cita cita = citaRepository.findById(request.idCita())
-                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + request.idCita()));
+    public HistoriaClinicaResponseDTO crearHistoriaClinica(HistoriaClinicaRequestDTO dto) {
+        Cita cita = buscarCitaValidada(dto.idCita());
+        HistoriaClinica historia = HistoriaClinicaMapper.toEntity(cita, dto);
+        historiaRepository.save(historia);
+        return HistoriaClinicaMapper.toResponseDTO(historia);
+    }
+
+
+    private Cita buscarCitaValidada(Long citaId) {
+        Cita cita = citaRepository.findById(citaId)
+                .orElseThrow(() -> new EntidadNoEncontradaException("Cita no encontrada con ID: " + citaId));
 
         if (cita.getEstadoCita() != EstadoCita.COMPLETADO) {
             throw new ValidacionException("Solo se pueden crear historias de citas completadas");
         }
-
-        boolean yaTieneHistoria = historiaRepository.existsByCitaId(request.idCita());
-
-        if (yaTieneHistoria) {
+        if (historiaRepository.existsByCitaId(citaId)) {
             throw new ValidacionException("La cita ya tiene una historia clínica");
         }
-
-        HistoriaClinica historiaClinica = new HistoriaClinica();
-        historiaClinica.setDoctor(cita.getDoctor());
-        historiaClinica.setPaciente(cita.getPaciente());
-        historiaClinica.setCita(cita);
-        historiaClinica.setFecha(LocalDateTime.now());
-        historiaClinica.setDiagnostico(request.diagnostico());
-        historiaClinica.setSintomas(request.sintomas());
-        historiaClinica.setTratamientoPrescrito(request.tratamientoPrescrito());
-        historiaClinica.setObservaciones(request.observaciones());
-
-        historiaRepository.save(historiaClinica);
-
-        return HistoriaClinicaMapper.toResponseDTO(historiaClinica);
+        return cita;
     }
 
 
@@ -87,24 +80,30 @@ public class HistoriaClinicaService {
     }
 
 
-    public HistoriaClinica crearHistoriaAutomaticaPorCita(Cita cita) {
+    public void crearHistoriaAutomaticaPorCita(Cita cita) {
         if (historiaRepository.existsByCitaId(cita.getId())) {
-            return null;
+            return ;
         }
 
-        HistoriaClinica historia = new HistoriaClinica();
-        historia.setPaciente(cita.getPaciente());
-        historia.setDoctor(cita.getDoctor());
-        historia.setCita(cita);
-        historia.setFecha(LocalDateTime.now());
-        historia.setDiagnostico("Pendiente de completar");
-        historia.setSintomas("Pendiente de completar");
-        historia.setTratamientoPrescrito("Pendiente de completar");
-        historia.setObservaciones("Historia clínica generada automáticamente");
+        HistoriaClinicaRequestDTO dto = new HistoriaClinicaRequestDTO(
+                cita.getId(),
+                "Pendiente de completar",
+                "Pendiente de completar",
+                "Pendiente de completar",
+                "Historia clínica generada automáticamente"
+        );
 
-        return historiaRepository.save(historia);
+        HistoriaClinica historia = HistoriaClinicaMapper.toEntity(cita, dto);
+        historiaRepository.save(historia);
     }
 
+    // En HistoriaClinicaService
+    public HistoriaClinicaResponseDTO actualizarHistoriaClinica(Long id, ActualizarHistoriaClinicaRequestDTO dto) {
+        HistoriaClinica historia = buscarEntidadPorId(id);
+        HistoriaClinicaMapper.updateEntity(historia, dto);
+        historiaRepository.save(historia);
+        return HistoriaClinicaMapper.toResponseDTO(historia);
+    }
 
 
 }

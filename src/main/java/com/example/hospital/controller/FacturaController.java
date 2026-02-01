@@ -1,5 +1,6 @@
 package com.example.hospital.controller;
 
+import com.example.hospital.dto.request.ActualizarFacturaRequestDTO;
 import com.example.hospital.dto.request.CambiarEstadoFacturaRequest;
 import com.example.hospital.dto.request.FacturaRequestDTO;
 import com.example.hospital.dto.response.FacturaResponseDTO;
@@ -23,13 +24,13 @@ public class FacturaController {
     }
 
     @PostMapping
-    public ResponseEntity<FacturaResponseDTO> CrearFactura(@Valid @RequestBody FacturaRequestDTO facturaRequestDTO) {
+    public ResponseEntity<FacturaResponseDTO> crearFactura(@Valid @RequestBody FacturaRequestDTO facturaRequestDTO) {
         FacturaResponseDTO factura = facturaService.crearFactura(facturaRequestDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(factura);
     }
 
     @GetMapping
-    public ResponseEntity<List<FacturaResponseDTO>> ListarFacturas() {
+    public ResponseEntity<List<FacturaResponseDTO>> listarFacturas() {
         return  ResponseEntity.status(HttpStatus.OK).body(facturaService.listarFacturas());
     }
 
@@ -54,6 +55,13 @@ public class FacturaController {
     @PutMapping("/{id}/estado")
     public ResponseEntity<FacturaResponseDTO> actualizarEstado(@PathVariable Long id, @Valid @RequestBody CambiarEstadoFacturaRequest request) {
         return ResponseEntity.ok(facturaService.actualizarEstadoFactura(id, request.estado()));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<FacturaResponseDTO> actualizarFactura(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarFacturaRequestDTO request) {
+        return ResponseEntity.ok(facturaService.actualizarFactura(id, request));
     }
 
 
