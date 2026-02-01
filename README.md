@@ -15,7 +15,6 @@ Sistema de gestión hospitalaria construido como API REST con Spring Boot. Manej
 | Lombok | Boilerplate reducido |
 | Jakarta Validation | Bean Validation en DTOs |
 | Springdoc OpenAPI | Documentación automática |
-| JUnit 5 + Mockito | Tests unitarios |
 
 ---
 
@@ -24,14 +23,14 @@ Sistema de gestión hospitalaria construido como API REST con Spring Boot. Manej
 ```
 Controllers  →  Services  →  Repositories (JPA)  →  PostgreSQL
    (API)       (lógica +        (queries)           (8 tablas)
-              flujos auto)
+              flujos automáticos)
 ```
 
 El proyecto sigue una arquitectura en capas con clara separación de responsabilidades:
 
 - **Controllers** — Reciben las peticiones HTTP, delegan al service y retornan la respuesta. No contienen lógica de negocio.
 - **Services** — Contienen la lógica de negocio, validaciones y flujos automáticos. Cada método tiene una única responsabilidad.
-- **Mappers** — Encapsolan la conversión entre DTOs y entidades JPA en ambas direcciones.
+- **Mappers** — Encapsulan la conversión entre DTOs y entidades JPA en ambas direcciones.
 - **Repositories** — Interfaces de Spring Data JPA que generan queries automáticamente.
 - **Entidades JPA** — Representan las tablas de la base de datos con relaciones y anotaciones de persistencia.
 
@@ -52,9 +51,6 @@ src/main/java/com/example/hospital/
 │   └── response/        # DTOs de salida
 └── exception/           # Excepciones personalizadas y GlobalExceptionHandler
 
-src/test/java/com/example/hospital/
-└── service/
-    └── CitaServiceTest.java   # 21 tests unitarios
 ```
 
 ---
@@ -68,7 +64,7 @@ Gestión completa de pacientes con estados ACTIVO/INACTIVO.
 Registro de doctores con especialidad, horario de atención y disponibilidad.
 
 ### Citas
-Agendamiento de citas con máquina de estados y validaciones de horario:
+Agenda de citas con máquina de estados y validaciones de horario:
 
 ```
 PROGRAMADO → EN_PROCESO → COMPLETADO
