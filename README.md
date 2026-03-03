@@ -1,4 +1,4 @@
-# 🏥 Hospital Management System API
+# 🏥 Sistema de gestión hospitalaria API
 
 Sistema de gestión hospitalaria construido como API REST con Spring Boot. Maneja pacientes, doctores, citas, historias clínicas, recetas y facturas, con persistencia en PostgreSQL mediante JPA.
 
